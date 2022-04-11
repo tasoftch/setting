@@ -22,13 +22,16 @@ You can design the table however you want.
 Now in PHP see below how you can access the settings:
 ```php
 <?php
-use Skyline\Setup\DefaultSetting;
+use TASoft\Setting\StaticSetting;
+use TASoft\Util\PDO;
 
-$setup = DefaultSetting::getDefaultSetting();
+/** @var PDO $PDO */
+
+$setup = new StaticSetting($PDO, 'TABLE_NAME');
 echo $setup->getSetting('my-setting', /* default value */ 'not-available');
 
 // Defining a setting, see below
-$setup->setSetting('my-setting', /* value */ 13, /* temporary */ false, /* multiple */ false);
+$setup->setSetting('my-setting', /* value */ 13, /* multiple */ false, /* temporary */ false);
 // Passing true to temporary will only update the value for the current request, while passing false writes the passed value into the database persistently.
 
 // Removes the setting
@@ -37,9 +40,11 @@ $setup->removeSetting('my-setting', /* temporary */ false);
 ```
 
 See below how you can use a custom setting tool:
+
 ```php
 <?php
-use Skyline\Setup\AbstractSetting;
+use TASoft\Setting\AbstractSetting;
+use TASoft\Util\PDO;
 
 class MySetting extends AbstractSetting {
     // Adjust the sql table field names
@@ -50,6 +55,12 @@ class MySetting extends AbstractSetting {
     
     protected function getTableName() : string{
         return "MY_TABLE_NAME";
+    }
+    
+    protected function getPDO() : PDO {
+        // Get PDO from anywhere
+        /** @var PDO $PDO */
+        return $PDO;
     }
 }
 

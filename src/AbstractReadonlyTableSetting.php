@@ -69,7 +69,7 @@ abstract class AbstractReadonlyTableSetting extends AbstractSetting
 	{
 		if(in_array($key, $this->readOnlySettingNames))
 			throw (new ReadonlySettingException("Can not change readonly setting", 401))->setSettingName($key);
-		parent::setSetting($key, $value, $temporary, $multiple);
+		return parent::setSetting($key, $value, $temporary, $multiple);
 	}
 
 	/**
@@ -79,6 +79,17 @@ abstract class AbstractReadonlyTableSetting extends AbstractSetting
 	{
 		if(in_array($key, $this->readOnlySettingNames))
 			throw (new ReadonlySettingException("Can not remove readonly setting", 402))->setSettingName($key);
-		parent::removeSetting($key, $temporary);
+		return parent::removeSetting($key, $temporary);
+	}
+
+	/**
+	 * @inheritDoc
+	 */
+	public function refreshSettings(array $keys)
+	{
+		$keys = array_filter($keys, function($k) {
+			return !in_array($k, $this->readOnlySettingNames);
+		});
+		return parent::refreshSettings($keys);
 	}
 }

@@ -75,6 +75,27 @@ abstract class AbstractSetting implements SettingInterface
 	}
 
 	/**
+	 * Internal fetch method
+	 *
+	 * @param $SQL
+	 * @param PDO $PDO
+	 * @param string $n
+	 * @param string $c
+	 */
+	private function _loadSettingsFromSQL($SQL, PDO $PDO, $n = self::RECORD_NAME_KEY, $c = self::RECORD_CONTENT_KEY) {
+		foreach($PDO->select($SQL) as $record) {
+			if($k = $record[ $n ] ?? NULL) {
+				$cnt = $record[ $c ] ?? NULL;
+
+				if($this->isMultipleRecord($record))
+					$this->settings[$k][] = $cnt;
+				else
+					$this->settings[$k] = $cnt;
+			}
+		}
+	}
+
+	/**
 	 * Internal import setting method
 	 *
 	 * @param string $table
@@ -85,16 +106,7 @@ abstract class AbstractSetting implements SettingInterface
 		$c = static::RECORD_CONTENT_KEY;
 		$m = static::RECORD_MULTIPLE_KEY;
 
-		foreach($PDO->select("SELECT DISTINCT $n, $c, $m FROM $table") as $record) {
-			if($k = $record[ $n ] ?? NULL) {
-				$cnt = $record[ $c ] ?? NULL;
-
-				if($this->isMultipleRecord($record))
-					$this->settings[$k][] = $cnt;
-				else
-					$this->settings[$k] = $cnt;
-			}
-		}
+		$this->_loadSettingsFromSQL("SELECT DISTINCT $n, $c, $m FROM $table", $PDO);
 	}
 
 	/**
@@ -108,6 +120,30 @@ abstract class AbstractSetting implements SettingInterface
 		return ( $record[static::RECORD_MULTIPLE_KEY] ) ? true : false;
 	}
 
+	/**
+	 * Reloads a given set of settings from the SQL
+	 *
+	 * @param array $keys
+	 * @return static
+	 */
+	public function refreshSettings(array $keys) {
+		if(count($keys)) {
+			$n = static::RECORD_NAME_KEY;
+			$c = static::RECORD_CONTENT_KEY;
+			$m = static::RECORD_MULTIPLE_KEY;
+
+			$PDO = $this->_getPDO();
+
+			foreach($keys as &$key)
+				$key = $PDO->quote($key);
+
+			$filter = join(",", $keys);
+
+			$table = $this->getTableName();
+			$this->_loadSettingsFromSQL("SELECT DISTINCT $n, $c, $m FROM $table WHERE $n IN ($filter)", $PDO);
+		}
+		return $this;
+	}
 
 	/**
 	 * @inheritDoc
@@ -151,6 +187,7 @@ abstract class AbstractSetting implements SettingInterface
 					]);
 			}
 		}
+		return $this;
 	}
 
 	/**
@@ -166,6 +203,7 @@ abstract class AbstractSetting implements SettingInterface
 			$n = static::RECORD_NAME_KEY;
 			$this->_getPDO()->inject("DELETE FROM $table WHERE $n = ?")->send([$key]);
 		}
+		return $this;
 	}
 
 	/**
