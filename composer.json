@@ -1,0 +1,19 @@
+{
+  "name": "tasoft/setting",
+  "license": "MIT",
+  "authors": [
+    {
+      "name": "Thomas Abplanalp",
+      "email": "info@tasoft.ch"
+    }
+  ],
+  "autoload": {
+    "psr-4": {
+      "TASoft\\Setting\\" : "src"
+    }
+  },
+  "require" : {
+    "php": ">=7.2",
+    "tasoft/php-pdo": "^0.8"
+  }
+}
